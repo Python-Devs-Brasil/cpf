@@ -1,32 +1,130 @@
 # -*- coding: utf-8 -*-
-# A função "validate" recebe nove dígitos, após, gera 2 dígitos verificadores, matematicamente validando o CPF.
-# A função "check" calcula e checa a veracidade do CPF fornecido.
-# O script não checa com a Receita Federal, a checagem se baseia apenas na parte matemática.
+"""
+Rotinas de manipulação e validação de números de CPF.
 
-def validate(x):
-    x = str(x.replace(".",""))
-    if len(x) != 9:
-        return False
-    else:
-        x_ini = x
-        z = (((int(x[0])*10)+(int(x[1])*9)+(int(x[2])*8)+(int(x[3])*7)+(int(x[4])*6)+(int(x[5])*5)+(int(x[6])*4)+(int(x[7])*3)+(int(x[8])*2)) % 11)
-        if z <= 2:
-            dv1 = 0
-        else:
-            dv1 = (11 - z)
-        x = (str(x_ini) + str(dv1))
-        z = (((int(x[0])*11)+(int(x[1])*10)+(int(x[2])*9)+(int(x[3])*8)+(int(x[4])*7)+(int(x[5])*6)+(int(x[6])*5)+(int(x[7])*4)+(int(x[8])*3)+(int(x[9])*2)) % 11)
-        if z <= 2:
-            dv2 = 0
-        else:
-            dv2 = (11 - z)
-        cpf = (x_ini + str(dv1) + str(dv2))
-        return("%s.%s.%s-%s" % ((str(cpf))[:3],(str(cpf))[3:6],(str(cpf))[6:9],(str(cpf))[9:]))
+"""
 
-def check(x):
-    base = (((str(x)).replace(".","")).replace("-",""))
-    check = base[:-2]
-    if (((str(validate(check))).replace(".","")).replace("-","")) == base:
-        return True
-    else:
-        return False
+class CPFError(Exception):
+	pass
+
+class CPF:
+	"""
+	Validação matemática do número do Cadastro de Pessoas Físicas (CPF).
+
+	"""
+	def __init__(self, cpf=''):
+		if not '-' in cpf:
+			cpf += '-'
+
+		cpf = cpf.replace('.', '').split('-')
+		self.__nums__ = map(int, cpf[0])
+		self.__validation__ = map(int, cpf[1])
+
+		if not len(self.__nums__) in (0, 9):
+			raise CPFError,	"O CPF tem %d dígitos em vez de 9" % len(
+					self.__nums__)
+
+		if not len(self.__validation__) in (0, 2):
+			raise CPFError, ("O dígito de verificação tem %d" +
+				" dígitos em vez de 2") % len(
+					self.__validation__)
+
+	def __str__(self, usedots=True):
+		"""
+		Retorna o CPF como string.
+
+		@param usedots: Usa notação com pontos a cada três números.
+
+		Ex.:
+		>>> c = CPF('123456789-00')
+		>>> str(c)
+		'123.456.789-00'
+		>>> c = CPF('123.456.789')
+		>>> str(c)
+		'123.456.789-00'
+		>>> c.__str__(False)
+		'123456789-00'
+		"""
+		return ('%d%d%d.%d%d%d.%d%d%d-%d%d' if usedots else
+				'%d%d%d%d%d%d%d%d%d-%d%d') % tuple(self.__nums__+self.__validation__)
+
+	def __repr__(self):
+		return '<CPF %s at 0x%x>' % (str(self), id(self))
+
+	def validate(self):
+		"""
+		Calcula os dígitos de verificação para o CPF.
+
+		@return: Uma lista com os dígitos de verificação.
+		"""
+
+		z = 0
+		vd = [0,0]
+
+		for i in range(len(self.__nums__)):
+			z += self.__nums__[i] * (10 - i)
+		z = z % 11
+
+		vd[0] = 0 if z <= 2 else (11 - z)
+
+		tmp = self.__nums__ + [vd[0]]
+		z = 0
+		for i in range(len(tmp)):
+			z += tmp[i] * (11 - i)
+		z = z % 11
+
+		vd[1] = 0 if z <= 2 else (11 - z)
+
+		self.__validation__ = vd
+
+		return vd
+
+	def check(self):
+		"""
+		Verifica se o dígito de verificação dado corresponde ao
+		resto do número de CPF.
+
+		@return: True se válido, False caso contrário.
+		"""
+		v = self.__validation__
+		return v == self.validate()
+
+def generate():
+	"""
+	Gera um número de CPF aleatório válido.
+
+	@return: Um objeto do tipo CPF correspondente.
+	"""
+	from random import randint
+
+	cpf = ''.join(map(str, [randint(0, 9) for i in range(0, 9)]))
+	cpf = CPF(cpf)
+	cpf.validate()
+
+	return cpf
+
+def main():
+	"""
+	Inicia módulo como script.
+	"""
+	import sys
+	import getopt
+
+	opts, args = getopt.getopt(sys.argv[1:], 'gv:')
+		
+	for opt,arg in opts:
+		if opt == '-g':
+			print generate()
+			return
+		elif opt == '-v':
+			c = CPF(arg)
+			if c.check():
+				print 'CPF válido.'
+				sys.exit(0)
+			else:
+				print 'CPF inválido.'
+				sys.exit(1)
+
+
+if __name__ == '__main__':
+	main()
