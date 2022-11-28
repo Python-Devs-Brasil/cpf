@@ -31,7 +31,7 @@ Coloque o arquivo **cpf.py** no diretório do seu projeto
 from cpf import *
 
 cpf = generate()
-print cpf
+print(cpf)
 
 ```
 
@@ -40,12 +40,12 @@ print cpf
 ```python
 from cpf import *
 
-cpf_user = CPF(raw_input('CPF: '))
+cpf_user = CPF(raw_input("CPF: "))
 
 if cpf_user.check():
-    print 'CPF válido'
+    print("CPF válido")
 else:
-	print 'CPF inválido'
+    print("CPF inválido")
 ```
 
 #### Verificar os 2 dígitos verificadores.
@@ -54,8 +54,8 @@ else:
 from cpf import *
 
 cpf = generate()
-print 'CPF gerado: {}'.format(cpf)
+print("CPF gerado: {}".format(cpf))
 
 digitos = cpf.validate()
-print 'Dígitos verificadores : {}'.format(digitos)
+print("Dígitos verificadores : {}".format(digitos))
 ```
